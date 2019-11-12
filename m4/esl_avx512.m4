@@ -59,8 +59,8 @@ AC_DEFUN([ESL_AVX512],[
 #include <x86intrin.h>
 #include <stdint.h>
 int main(void) {
-  __m512i v1 = _mm512_set1_epi8(21);   
-  union { __m256i v; int8_t x[32]; } v2;
+  simde__m512i v1 = _mm512_set1_epi8(21);   
+  union { simde__m256i v; int8_t x[32]; } v2;
   v2.v = _mm512_extracti32x8_epi32(_mm512_adds_epi8(v1, v1), 0x1);
   return (v2.x[0] == 42 ? 0 : 1);}
     ]])], [ esl_have_avx512=yes; break; ], [])

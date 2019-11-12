@@ -375,7 +375,7 @@ AC_MSG_CHECKING([whether flush-to-zero (FTZ) is supported])
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
     [#include <xmmintrin.h>],
-    [_MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_ON);])], 
+    [SIMDE_MM_SET_FLUSH_ZERO_MODE (SIMDE_MM_FLUSH_ZERO_ON);])], 
   [ AC_MSG_RESULT([yes])
     AC_DEFINE([HAVE_FLUSH_ZERO_MODE], 1, [Set to support FTZ, flush-to-zero mode])],
   [ AC_MSG_RESULT([no]) ])
@@ -384,7 +384,7 @@ AC_MSG_CHECKING([whether denormals-are-zero (DAZ) is supported])
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
     [#include <pmmintrin.h>],
-    [_MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_ON);])], 
+    [SIMDE_MM_SET_DENORMALS_ZERO_MODE (SIMDE_MM_DENORMALS_ZERO_ON);])], 
   [ AC_MSG_RESULT([yes])
     AC_DEFINE([HAVE_DENORMALS_ZERO_MODE], 1, [Set to support DAZ, denormals-are-zero mode])],
   [ AC_MSG_RESULT([no]) ])
@@ -516,7 +516,7 @@ AC_CHECK_FUNCS([ \
   aligned_alloc  \
   erfc           \
   getpid         \
-  _mm_malloc     \
+  simde_mm_malloc     \
   popen          \
   posix_memalign \
   strcasecmp     \

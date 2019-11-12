@@ -48,10 +48,10 @@ AC_DEFUN([ESL_SSE], [
 #include <x86intrin.h>
 #include <stdint.h>
 int stub_sse(void) {
-__m128i v1 = _mm_set1_epi32(42);
-__m128i v2 = _mm_set1_epi32(86);
-union { __m128i v; int32_t x[4]; } v3;
-v3.v = _mm_add_epi32(v1, v2);
+simde__m128i v1 = simde_mm_set1_epi32(42);
+simde__m128i v2 = simde_mm_set1_epi32(86);
+union { simde__m128i v; int32_t x[4]; } v3;
+v3.v = simde_mm_add_epi32(v1, v2);
 return (int) v3.x[0];
 }
 int main(void) { if (stub_sse() != 128) return 1; else return 0; }

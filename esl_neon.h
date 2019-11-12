@@ -41,7 +41,7 @@
  * x86 vector code utilizes a single type for each view of its vector
  * registers; for example:
  * 
- * __m128 a = _mm_and_ps(...)
+ * simde__m128 a = simde_mm_and_ps(...)
  * 
  * would be used for any combination of element sizes and lane numbers 
  * for some Intel vector register mapped to the C variable 'a'.
@@ -324,8 +324,8 @@ esl_neon_any_gt_float(esl_neon_128f_t a, esl_neon_128f_t b)
  *            to implement \ccode{if (a > 0) a += a;}:
  *            
  *            \begin{cchunk}
- *              mask = _mm_cmpgt_ps(a, _mm_setzero_ps());
- *              twoa = _mm_add_ps(a, a);
+ *              mask = simde_mm_cmpgt_ps(a, simde_mm_setzero_ps());
+ *              twoa = simde_mm_add_ps(a, a);
  *              a    = esl_sse_select_ps(a, twoa, mask);
  *            \end{cchunk}
  *

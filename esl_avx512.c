@@ -28,7 +28,7 @@
  *****************************************************************/
 
 void 
-esl_avx512_dump_512i_hex8(__m512i v)
+esl_avx512_dump_512i_hex8(simde__m512i v)
 {
   uint64_t *val = (uint64_t*) &v;
   printf("%016" PRIx64 " %016" PRIx64 " %016" PRIx64 " %016" PRIx64 " %016" PRIx64 " %016" PRIx64 " %016" PRIx64 " %016" PRIx64 "\n", 
@@ -45,7 +45,7 @@ esl_avx512_dump_512i_hex8(__m512i v)
 static void
 utest_hmax_epu8(ESL_RANDOMNESS *rng)
 {
-  union { __m512i v; uint8_t x[64]; } u;
+  union { simde__m512i v; uint8_t x[64]; } u;
   uint8_t r1, r2;
   int     i,z;
 
@@ -65,7 +65,7 @@ utest_hmax_epu8(ESL_RANDOMNESS *rng)
 static void
 utest_hmax_epi8(ESL_RANDOMNESS *rng)
 {
-  union { __m512i v; int8_t x[64]; } u;
+  union { simde__m512i v; int8_t x[64]; } u;
   int8_t r1, r2;
   int    i,z;
 
@@ -86,7 +86,7 @@ utest_hmax_epi8(ESL_RANDOMNESS *rng)
 static void
 utest_hmax_epi16(ESL_RANDOMNESS *rng)
 {
-  union { __m512i v; int16_t x[32]; } u;
+  union { simde__m512i v; int16_t x[32]; } u;
   int16_t r1, r2;
   int     i,z;
 

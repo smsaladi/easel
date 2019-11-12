@@ -104,7 +104,6 @@ HDRS = 	easel.h\
 	esl_avx512.h\
 	esl_buffer.h\
 	esl_cluster.h\
-	esl_cpu.h\
 	esl_composition.h\
 	esl_dirichlet.h\
 	esl_distance.h\
@@ -178,7 +177,6 @@ OBJS =	easel.o\
 	esl_buffer.o\
 	esl_cluster.o\
 	esl_composition.o\
-	esl_cpu.o\
 	esl_dirichlet.o\
 	esl_distance.o\
 	esl_dmatrix.o\
@@ -266,7 +264,6 @@ UTESTS =\
 	esl_alphabet_utest\
 	esl_buffer_utest\
 	esl_cluster_utest\
-	esl_cpu_utest\
 	esl_dirichlet_utest\
 	esl_distance_utest\
 	esl_dmatrix_utest\
@@ -398,7 +395,6 @@ EXAMPLES = \
 	esl_buffer_example5\
 	esl_buffer_example6\
         esl_cluster_example\
-	esl_cpu_example\
         esl_dirichlet_example\
         esl_dmatrix_example\
         esl_dsqdata_example\

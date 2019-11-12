@@ -30,7 +30,7 @@
  *****************************************************************/
 
 void 
-esl_avx_dump_256i_hex4(__m256i v)
+esl_avx_dump_256i_hex4(simde__m256i v)
 {
   uint64_t *val = (uint64_t *) &v;
   printf("%016" PRIx64 " %016" PRIx64 " %016" PRIx64 " %016" PRIx64 "\n", 
@@ -68,17 +68,17 @@ static char banner[] = "benchmark driver for avx module";
 int
 main(int argc, char **argv)
 {
-  union { __m256i v; uint32_t x[8]; } u;
+  union { simde__m256i v; uint32_t x[8]; } u;
   ESL_GETOPTS    *go      = esl_getopts_CreateDefaultApp(options, 1, argc, argv, banner, usage);
   ESL_RANDOMNESS *rng     = esl_randomness_Create(esl_opt_GetInteger(go, "-s"));
   ESL_STOPWATCH  *w       = esl_stopwatch_Create();
   char           *fname   = esl_opt_GetArg(go, 1);
   int             N       = esl_opt_GetInteger(go, "-N");
-  __m256i        *v;
+  simde__m256i        *v;
   int             i,z;
 
   /* A bunch of vectors full of random numbers. Takes ~10-20s to generate the data */
-  v = malloc(sizeof(__m256i) * N);
+  v = malloc(sizeof(simde__m256i) * N);
   for (i = 0; i < N; i++)
     {
       for (z = 0; z < 8; z++) u.x[z] = esl_random_uint32(rng);
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 static void
 utest_hmax_epu8(ESL_RANDOMNESS *rng)
 {
-  union { __m256i v; uint8_t x[32]; } u;
+  union { simde__m256i v; uint8_t x[32]; } u;
   uint8_t r1, r2;
   int     i,z;
 
@@ -155,7 +155,7 @@ utest_hmax_epu8(ESL_RANDOMNESS *rng)
 static void
 utest_hmax_epi8(ESL_RANDOMNESS *rng)
 {
-  union { __m256i v; int8_t x[32]; } u;
+  union { simde__m256i v; int8_t x[32]; } u;
   int8_t r1, r2;
   int    i,z;
 
@@ -176,7 +176,7 @@ utest_hmax_epi8(ESL_RANDOMNESS *rng)
 static void
 utest_hmax_epi16(ESL_RANDOMNESS *rng)
 {
-  union { __m256i v; int16_t x[16]; } u;
+  union { simde__m256i v; int16_t x[16]; } u;
   int16_t r1, r2;
   int     i,z;
 

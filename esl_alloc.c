@@ -21,7 +21,7 @@
  * 1. Portable(-ish) fallback implementation of aligned allocation
  *****************************************************************/
 #if defined(eslALLOC_TESTDRIVE) || defined (eslALLOC_BENCHMARK) || \
-  (! defined(HAVE_POSIX_MEMALIGN) && ! defined(HAVE_ALIGNED_ALLOC) && ! defined(HAVE__MM_MALLOC))
+  (! defined(HAVE_POSIX_MEMALIGN) && ! defined(HAVE_ALIGNED_ALLOC) && ! defined(HAVE_SIMDE_MM_MALLOC))
 /* Only compile this section if we need it, or for the unit test driver. */
 
 /* alloc_aligned_fallback()
@@ -136,8 +136,8 @@ esl_alloc_aligned(size_t size, size_t alignment)
   if (posix_memalign(&p, alignment, size) != 0) return NULL;
 #elif  HAVE_ALIGNED_ALLOC
   p = aligned_alloc(alignment, size);
-#elif  HAVE__MM_MALLOC
-  p = _mm_malloc(size, alignment);
+#elif  HAVE_SIMDE_MM_MALLOC
+  p = simde_mm_malloc(size, alignment);
 #else
   p = alloc_aligned_fallback(size, alignment);
 #endif
@@ -159,8 +159,8 @@ esl_alloc_free(void *p)
     free(p);
 #elif  HAVE_ALIGNED_ALLOC
     free(p);
-#elif  HAVE__MM_MALLOC
-    _mm_free(p);
+#elif  HAVE_SIMDE_MM_MALLOC
+    simde_mm_free(p);
 #else
     alloc_aligned_free_fallback(p);
 #endif
@@ -394,8 +394,8 @@ main(int argc, char **argv)
   fprintf(stderr, "#  esl_alloc is using: posix_memalign()\n");
 #elif  HAVE_ALIGNED_ALLOC
   fprintf(stderr, "#  esl_alloc is using: aligned_alloc()\n");
-#elif  HAVE__MM_MALLOC
-  fprintf(stderr, "#  esl_alloc is using: _mm_malloc()\n");
+#elif  HAVE_SIMDE_MM_MALLOC
+  fprintf(stderr, "#  esl_alloc is using: simde_mm_malloc()\n");
 #else
   fprintf(stderr, "#  esl_alloc is using: alloc_aligned_fallback()\n");
 #endif

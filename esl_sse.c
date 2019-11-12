@@ -2,7 +2,7 @@
  * 
  * Contents:           
  *     1. SIMD logf(), expf()
- *     2. Utilities for ps vectors (4 floats in a __m128)
+ *     2. Utilities for ps vectors (4 floats in a simde__m128)
  *     3. Benchmark
  *     4. Unit tests
  *     5. Test driver
@@ -42,7 +42,6 @@
 #include "easel.h"
 #include "esl_sse.h"
 
-
 /*****************************************************************
  * 1. SSE SIMD logf(), expf()
  *****************************************************************/ 
@@ -68,71 +67,71 @@
  *            Pommier. Converted to SSE2 and added handling
  *            of IEEE754 specials.
  */
-__m128 
-esl_sse_logf(__m128 x) 
+simde__m128 
+esl_sse_logf(simde__m128 x) 
 {
   static float cephes_p[9] = {  7.0376836292E-2f, -1.1514610310E-1f,  1.1676998740E-1f,
 				-1.2420140846E-1f, 1.4249322787E-1f, -1.6668057665E-1f,
 				2.0000714765E-1f, -2.4999993993E-1f,  3.3333331174E-1f };
-  __m128  onev = _mm_set1_ps(1.0f);          /* all elem = 1.0 */
-  __m128  v0p5 = _mm_set1_ps(0.5f);          /* all elem = 0.5 */
-  __m128i vneg = _mm_set1_epi32(0x80000000); /* all elem have IEEE sign bit up */
-  __m128i vexp = _mm_set1_epi32(0x7f800000); /* all elem have IEEE exponent bits up */
-  __m128i ei;
-  __m128  e;
-  __m128  invalid_mask, zero_mask, inf_mask;            /* masks used to handle special IEEE754 inputs */
-  __m128  mask;
-  __m128  origx;
-  __m128  tmp;
-  __m128  y;
-  __m128  z;
+  simde__m128  onev = simde_mm_set1_ps(1.0f);          /* all elem = 1.0 */
+  simde__m128  v0p5 = simde_mm_set1_ps(0.5f);          /* all elem = 0.5 */
+  simde__m128i vneg = simde_mm_set1_epi32(0x80000000); /* all elem have IEEE sign bit up */
+  simde__m128i vexp = simde_mm_set1_epi32(0x7f800000); /* all elem have IEEE exponent bits up */
+  simde__m128i ei;
+  simde__m128  e;
+  simde__m128  invalid_mask, zero_mask, inf_mask;            /* masks used to handle special IEEE754 inputs */
+  simde__m128  mask;
+  simde__m128  origx;
+  simde__m128  tmp;
+  simde__m128  y;
+  simde__m128  z;
 
   /* first, split x apart: x = frexpf(x, &e); */
-  ei           = _mm_srli_epi32( _mm_castps_si128(x), 23);	                                        /* shift right 23: IEEE754 floats: ei = biased exponents     */
-  invalid_mask = _mm_castsi128_ps ( _mm_cmpeq_epi32( _mm_and_si128(_mm_castps_si128(x), vneg), vneg));  /* mask any elem that's negative; these become NaN           */
-  zero_mask    = _mm_castsi128_ps ( _mm_cmpeq_epi32(ei, _mm_setzero_si128()));                          /* mask any elem zero or subnormal; these become -inf        */
-  inf_mask     = _mm_castsi128_ps ( _mm_cmpeq_epi32( _mm_and_si128(_mm_castps_si128(x), vexp), vexp));  /* mask any elem inf or NaN; log(inf)=inf, log(NaN)=NaN      */
+  ei           = simde_mm_srli_epi32( simde_mm_castps_si128(x), 23);	                                        /* shift right 23: IEEE754 floats: ei = biased exponents     */
+  invalid_mask = simde_mm_castsi128_ps ( simde_mm_cmpeq_epi32( simde_mm_and_si128(simde_mm_castps_si128(x), vneg), vneg));  /* mask any elem that's negative; these become NaN           */
+  zero_mask    = simde_mm_castsi128_ps ( simde_mm_cmpeq_epi32(ei, simde_mm_setzero_si128()));                          /* mask any elem zero or subnormal; these become -inf        */
+  inf_mask     = simde_mm_castsi128_ps ( simde_mm_cmpeq_epi32( simde_mm_and_si128(simde_mm_castps_si128(x), vexp), vexp));  /* mask any elem inf or NaN; log(inf)=inf, log(NaN)=NaN      */
   origx        = x;			                                                                /* store original x, used for log(inf) = inf, log(NaN) = NaN */
 
-  x  = _mm_and_ps(x, _mm_castsi128_ps(_mm_set1_epi32(~0x7f800000))); /* x now the stored 23 bits of the 24-bit significand        */
-  x  = _mm_or_ps (x, v0p5);                                          /* sets hidden bit b[0]                                      */
+  x  = simde_mm_and_ps(x, simde_mm_castsi128_ps(simde_mm_set1_epi32(~0x7f800000))); /* x now the stored 23 bits of the 24-bit significand        */
+  x  = simde_mm_or_ps (x, v0p5);                                          /* sets hidden bit b[0]                                      */
 
-  ei = _mm_sub_epi32(ei, _mm_set1_epi32(126));                       /* -127 (ei now signed base-2 exponent); then +1             */
-  e  = _mm_cvtepi32_ps(ei);
+  ei = simde_mm_sub_epi32(ei, simde_mm_set1_epi32(126));                       /* -127 (ei now signed base-2 exponent); then +1             */
+  e  = simde_mm_cvtepi32_ps(ei);
 
   /* now, calculate the log */
-  mask = _mm_cmplt_ps(x, _mm_set1_ps(0.707106781186547524f)); /* avoid conditional branches.           */
-  tmp  = _mm_and_ps(x, mask);	                              /* tmp contains x values < 0.707, else 0 */
-  x    = _mm_sub_ps(x, onev);
-  e    = _mm_sub_ps(e, _mm_and_ps(onev, mask));
-  x    = _mm_add_ps(x, tmp);
-  z    = _mm_mul_ps(x,x);
+  mask = simde_mm_cmplt_ps(x, simde_mm_set1_ps(0.707106781186547524f)); /* avoid conditional branches.           */
+  tmp  = simde_mm_and_ps(x, mask);	                              /* tmp contains x values < 0.707, else 0 */
+  x    = simde_mm_sub_ps(x, onev);
+  e    = simde_mm_sub_ps(e, simde_mm_and_ps(onev, mask));
+  x    = simde_mm_add_ps(x, tmp);
+  z    = simde_mm_mul_ps(x,x);
 
-  y =               _mm_set1_ps(cephes_p[0]);    y = _mm_mul_ps(y, x); 
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[1]));   y = _mm_mul_ps(y, x);    
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[2]));   y = _mm_mul_ps(y, x);   
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[3]));   y = _mm_mul_ps(y, x);   
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[4]));   y = _mm_mul_ps(y, x);    
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[5]));   y = _mm_mul_ps(y, x);   
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[6]));   y = _mm_mul_ps(y, x); 
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[7]));   y = _mm_mul_ps(y, x);  
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[8]));   y = _mm_mul_ps(y, x);
-  y = _mm_mul_ps(y, z);
+  y =               simde_mm_set1_ps(cephes_p[0]);    y = simde_mm_mul_ps(y, x); 
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[1]));   y = simde_mm_mul_ps(y, x);    
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[2]));   y = simde_mm_mul_ps(y, x);   
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[3]));   y = simde_mm_mul_ps(y, x);   
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[4]));   y = simde_mm_mul_ps(y, x);    
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[5]));   y = simde_mm_mul_ps(y, x);   
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[6]));   y = simde_mm_mul_ps(y, x); 
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[7]));   y = simde_mm_mul_ps(y, x);  
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[8]));   y = simde_mm_mul_ps(y, x);
+  y = simde_mm_mul_ps(y, z);
 
-  tmp = _mm_mul_ps(e, _mm_set1_ps(-2.12194440e-4f));
-  y   = _mm_add_ps(y, tmp);
+  tmp = simde_mm_mul_ps(e, simde_mm_set1_ps(-2.12194440e-4f));
+  y   = simde_mm_add_ps(y, tmp);
 
-  tmp = _mm_mul_ps(z, v0p5);
-  y   = _mm_sub_ps(y, tmp);
+  tmp = simde_mm_mul_ps(z, v0p5);
+  y   = simde_mm_sub_ps(y, tmp);
 
-  tmp = _mm_mul_ps(e, _mm_set1_ps(0.693359375f));
-  x = _mm_add_ps(x, y);
-  x = _mm_add_ps(x, tmp);
+  tmp = simde_mm_mul_ps(e, simde_mm_set1_ps(0.693359375f));
+  x = simde_mm_add_ps(x, y);
+  x = simde_mm_add_ps(x, tmp);
 
   /* IEEE754 cleanup: */
   x = esl_sse_select_ps(x, origx,                     inf_mask);  /* log(inf)=inf; log(NaN)      = NaN  */
-  x = _mm_or_ps(x, invalid_mask);                                 /* log(x<0, including -0,-inf) = NaN  */
-  x = esl_sse_select_ps(x, _mm_set1_ps(-eslINFINITY), zero_mask); /* x zero or subnormal         = -inf */
+  x = simde_mm_or_ps(x, invalid_mask);                                 /* log(x<0, including -0,-inf) = NaN  */
+  x = esl_sse_select_ps(x, simde_mm_set1_ps(-eslINFINITY), zero_mask); /* x zero or subnormal         = -inf */
   return x;
 }
 
@@ -178,70 +177,70 @@ esl_sse_logf(__m128 x)
  *              minlogf = -127.5 log(2) + epsilon 
  *            for an epsilon that happen to be ~ 3e-6.
  */
-__m128 
-esl_sse_expf(__m128 x) 
+simde__m128 
+esl_sse_expf(simde__m128 x) 
 {
   static float cephes_p[6] = { 1.9875691500E-4f, 1.3981999507E-3f, 8.3334519073E-3f, 
 			       4.1665795894E-2f, 1.6666665459E-1f, 5.0000001201E-1f };
   static float cephes_c[2] = { 0.693359375f,    -2.12194440e-4f };
   static float maxlogf     =  88.3762626647949f;  /* 127.5 log(2) - epsilon. above this, 0.5+x/log2 gives k>128 and breaks 2^k "float" construction, because (k+127)<<23 must be a valid IEEE754 exponent 0..255 */
   static float minlogf     = -88.3762626647949f;  /*-127.5 log(2) + epsilon. below this, 0.5+x/log2 gives k<-127 and breaks 2^k, see above */
-  __m128i k;
-  __m128  mask, tmp, fx, z, y, minmask, maxmask;
+  simde__m128i k;
+  simde__m128  mask, tmp, fx, z, y, minmask, maxmask;
   
   /* handle out-of-range and special conditions */
-  maxmask = _mm_cmpgt_ps(x, _mm_set1_ps(maxlogf));
-  minmask = _mm_cmple_ps(x, _mm_set1_ps(minlogf));
+  maxmask = simde_mm_cmpgt_ps(x, simde_mm_set1_ps(maxlogf));
+  minmask = simde_mm_cmple_ps(x, simde_mm_set1_ps(minlogf));
 
   /* range reduction: exp(x) = 2^k e^f = exp(f + k log 2); k = floorf(0.5 + x / log2): */
-  fx = _mm_mul_ps(x,  _mm_set1_ps(eslCONST_LOG2R));
-  fx = _mm_add_ps(fx, _mm_set1_ps(0.5f));
+  fx = simde_mm_mul_ps(x,  simde_mm_set1_ps(eslCONST_LOG2R));
+  fx = simde_mm_add_ps(fx, simde_mm_set1_ps(0.5f));
 
   /* floorf() with SSE:  */
-  k    = _mm_cvttps_epi32(fx);	              /* cast to int with truncation                  */
-  tmp  = _mm_cvtepi32_ps(k);	              /* cast back to float                           */
-  mask = _mm_cmpgt_ps(tmp, fx);               /* if it increased (i.e. if it was negative...) */
-  mask = _mm_and_ps(mask, _mm_set1_ps(1.0f)); /* ...without a conditional branch...           */
-  fx   = _mm_sub_ps(tmp, mask);	              /* then subtract one.                           */
-  k    = _mm_cvttps_epi32(fx);	              /* k is now ready for the 2^k part.             */
+  k    = simde_mm_cvttps_epi32(fx);	              /* cast to int with truncation                  */
+  tmp  = simde_mm_cvtepi32_ps(k);	              /* cast back to float                           */
+  mask = simde_mm_cmpgt_ps(tmp, fx);               /* if it increased (i.e. if it was negative...) */
+  mask = simde_mm_and_ps(mask, simde_mm_set1_ps(1.0f)); /* ...without a conditional branch...           */
+  fx   = simde_mm_sub_ps(tmp, mask);	              /* then subtract one.                           */
+  k    = simde_mm_cvttps_epi32(fx);	              /* k is now ready for the 2^k part.             */
   
   /* polynomial approx for e^f for f in range [-0.5, 0.5] */
-  tmp = _mm_mul_ps(fx, _mm_set1_ps(cephes_c[0]));
-  z   = _mm_mul_ps(fx, _mm_set1_ps(cephes_c[1]));
-  x   = _mm_sub_ps(x, tmp);
-  x   = _mm_sub_ps(x, z);
-  z   = _mm_mul_ps(x, x);
+  tmp = simde_mm_mul_ps(fx, simde_mm_set1_ps(cephes_c[0]));
+  z   = simde_mm_mul_ps(fx, simde_mm_set1_ps(cephes_c[1]));
+  x   = simde_mm_sub_ps(x, tmp);
+  x   = simde_mm_sub_ps(x, z);
+  z   = simde_mm_mul_ps(x, x);
   
-  y =               _mm_set1_ps(cephes_p[0]);    y = _mm_mul_ps(y, x);
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[1]));   y = _mm_mul_ps(y, x);
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[2]));   y = _mm_mul_ps(y, x);
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[3]));   y = _mm_mul_ps(y, x);
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[4]));   y = _mm_mul_ps(y, x);
-  y = _mm_add_ps(y, _mm_set1_ps(cephes_p[5]));   y = _mm_mul_ps(y, z);
-  y = _mm_add_ps(y, x);
-  y = _mm_add_ps(y, _mm_set1_ps(1.0f));
+  y =               simde_mm_set1_ps(cephes_p[0]);    y = simde_mm_mul_ps(y, x);
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[1]));   y = simde_mm_mul_ps(y, x);
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[2]));   y = simde_mm_mul_ps(y, x);
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[3]));   y = simde_mm_mul_ps(y, x);
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[4]));   y = simde_mm_mul_ps(y, x);
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(cephes_p[5]));   y = simde_mm_mul_ps(y, z);
+  y = simde_mm_add_ps(y, x);
+  y = simde_mm_add_ps(y, simde_mm_set1_ps(1.0f));
 
   /* build 2^k by hand, by creating a IEEE754 float */
-  k  = _mm_add_epi32(k, _mm_set1_epi32(127));
-  k  = _mm_slli_epi32(k, 23);
-  fx = _mm_castsi128_ps(k);
+  k  = simde_mm_add_epi32(k, simde_mm_set1_epi32(127));
+  k  = simde_mm_slli_epi32(k, 23);
+  fx = simde_mm_castsi128_ps(k);
   
   /* put 2^k e^f together (fx = 2^k,  y = e^f) and we're done */
-  y = _mm_mul_ps(y, fx);	
+  y = simde_mm_mul_ps(y, fx);	
 
   /* special/range cleanup */
-  y = esl_sse_select_ps(y, _mm_set1_ps(eslINFINITY), maxmask); /* exp(x) = inf for x > log(2^128)  */
-  y = esl_sse_select_ps(y, _mm_set1_ps(0.0f),        minmask); /* exp(x) = 0   for x < log(2^-149) */
+  y = esl_sse_select_ps(y, simde_mm_set1_ps(eslINFINITY), maxmask); /* exp(x) = inf for x > log(2^128)  */
+  y = esl_sse_select_ps(y, simde_mm_set1_ps(0.0f),        minmask); /* exp(x) = 0   for x < log(2^-149) */
   return y;
 }
 
 
 /*****************************************************************
- * 2. Utilities for ps vectors (4 floats in a __m128)
+ * 2. Utilities for ps vectors (4 floats in a simde__m128)
  *****************************************************************/ 
 
 void
-esl_sse_dump_ps(FILE *fp, __m128 v)
+esl_sse_dump_ps(FILE *fp, simde__m128 v)
 {
   float *p = (float *)&v;
   fprintf(fp, "[%13.8g, %13.8g, %13.8g, %13.8g]", p[0], p[1], p[2], p[3]);
@@ -281,7 +280,7 @@ main(int argc, char **argv)
   int             N       = esl_opt_GetInteger(go, "-N");
   float           origx   = 2.0;
   float           x       = origx;
-  __m128          xv      = _mm_set1_ps(x);
+  simde__m128          xv      = simde_mm_set1_ps(x);
   int             i;
 
   /* First, serial time. */
@@ -321,14 +320,14 @@ main(int argc, char **argv)
 static void
 utest_logf(ESL_GETOPTS *go)
 {
-  __m128 x;			       /* test input  */
-  union { __m128 v; float x[4]; } r;   /* test output */
+  simde__m128 x;			       /* test input  */
+  union { simde__m128 v; float x[4]; } r;   /* test output */
   
   /* Test IEEE754 specials: 
    *    log(-inf) = NaN     log(x<0)  = NaN  log(-0)   = NaN
    *    log(0)    = -inf    log(inf)  = inf  log(NaN)  = NaN
    */
-  x   = _mm_set_ps(0.0, -0.0, -1.0, -eslINFINITY); /* set_ps() is in order 3 2 1 0 */
+  x   = simde_mm_set_ps(0.0, -0.0, -1.0, -eslINFINITY); /* set_ps() is in order 3 2 1 0 */
   r.v =  esl_sse_logf(x); 
   if (esl_opt_GetBoolean(go, "-v")) {
     printf("logf");
@@ -340,7 +339,7 @@ utest_logf(ESL_GETOPTS *go)
   if (! isnan(r.x[2]))                 esl_fatal("logf(-0)   should be NaN");
   if (! (r.x[3] < 0 && isinf(r.x[3]))) esl_fatal("logf(0)    should be -inf");
 
-  x   = _mm_set_ps(FLT_MAX, FLT_MIN, eslNaN, eslINFINITY);
+  x   = simde_mm_set_ps(FLT_MAX, FLT_MIN, eslNaN, eslINFINITY);
   r.v = esl_sse_logf(x);
   if (esl_opt_GetBoolean(go, "-v")) {
     printf("logf");
@@ -356,11 +355,11 @@ utest_logf(ESL_GETOPTS *go)
 static void
 utest_expf(ESL_GETOPTS *go)
 {
-  __m128 x;			       /* test input  */
-  union { __m128 v; float x[4]; } r;   /* test output */
+  simde__m128 x;			       /* test input  */
+  union { simde__m128 v; float x[4]; } r;   /* test output */
   
   /* exp(-inf) = 0    exp(-0)  = 1   exp(0) = 1  exp(inf) = inf   exp(NaN)  = NaN */
-  x = _mm_set_ps(eslINFINITY, 0.0, -0.0, -eslINFINITY); /* set_ps() is in order 3 2 1 0 */
+  x = simde_mm_set_ps(eslINFINITY, 0.0, -0.0, -eslINFINITY); /* set_ps() is in order 3 2 1 0 */
   r.v =  esl_sse_expf(x); 
   if (esl_opt_GetBoolean(go, "-v")) {
     printf("expf");
@@ -373,7 +372,7 @@ utest_expf(ESL_GETOPTS *go)
   if (! isinf(r.x[3]))  esl_fatal("expf(inf)  should be inf");
 
   /* exp(NaN) = NaN    exp(large)  = inf   exp(-large) = 0  exp(1) = exp(1) */
-  x = _mm_set_ps(1.0f, -666.0f, 666.0f, eslNaN); /* set_ps() is in order 3 2 1 0 */
+  x = simde_mm_set_ps(1.0f, -666.0f, 666.0f, eslNaN); /* set_ps() is in order 3 2 1 0 */
   r.v =  esl_sse_expf(x); 
   if (esl_opt_GetBoolean(go, "-v")) {
     printf("expf");
@@ -397,7 +396,7 @@ utest_expf(ESL_GETOPTS *go)
    *     (3): expf(-87.6832)   => 0
    *     (4): expf(-87.6831)   => <FLT_MIN (subnormal) : ~8.31e-39 (may become 0 in flush-to-zero mode for subnormals)
    */
-  x   = _mm_set_ps(-88.3763, -88.3762, -87.6832, -87.6831);
+  x   = simde_mm_set_ps(-88.3763, -88.3762, -87.6832, -87.6831);
   r.v = esl_sse_expf(x); 
   if (esl_opt_GetBoolean(go, "-v")) {
     printf("expf");
@@ -421,8 +420,8 @@ utest_odds(ESL_GETOPTS *go, ESL_RANDOMNESS *r)
   int    very_verbose = esl_opt_GetBoolean(go, "--vv");
   int    i;
   float  p1, p2, odds;
-  union { __m128 v; float x[4]; } r1;   
-  union { __m128 v; float x[4]; } r2;   
+  union { simde__m128 v; float x[4]; } r1;   
+  union { simde__m128 v; float x[4]; } r2;   
   float  scalar_r1, scalar_r2;
   double  err1, maxerr1 = 0.0, avgerr1 = 0.0; /* errors on logf() */
   double  err2, maxerr2 = 0.0, avgerr2 = 0.0; /* errors on expf() */
@@ -435,7 +434,7 @@ utest_odds(ESL_GETOPTS *go, ESL_RANDOMNESS *r)
 
       if (odds == 0.0) esl_fatal("whoa, odds ratio can't be 0!\n");
 
-      r1.v      = esl_sse_logf(_mm_set1_ps(odds));  /* r1.x[z] = log(p1/p2) */
+      r1.v      = esl_sse_logf(simde_mm_set1_ps(odds));  /* r1.x[z] = log(p1/p2) */
       scalar_r1 = log(odds);
 
       err1       = (r1.x[0] == 0. && scalar_r1 == 0.) ? 0.0 : 2 * fabs(r1.x[0] - scalar_r1) / fabs(r1.x[0] + scalar_r1);
@@ -470,7 +469,7 @@ utest_odds(ESL_GETOPTS *go, ESL_RANDOMNESS *r)
 static void
 utest_hmax_epu8(ESL_RANDOMNESS *rng)
 {
-  union { __m128i v; uint8_t x[16]; } u;
+  union { simde__m128i v; uint8_t x[16]; } u;
   uint8_t r1, r2;
   int     i,z;
 
@@ -491,7 +490,7 @@ static void
 utest_hmax_epi8(ESL_RANDOMNESS *rng)
 {
 #ifdef eslENABLE_SSE4    // no-op if eslENABLE_SSE only
-  union { __m128i v; int8_t x[16]; } u;
+  union { simde__m128i v; int8_t x[16]; } u;
   int8_t r1, r2;
   int    i,z;
 
@@ -512,7 +511,7 @@ utest_hmax_epi8(ESL_RANDOMNESS *rng)
 static void
 utest_hmax_epi16(ESL_RANDOMNESS *rng)
 {
-  union { __m128i v; int16_t x[8]; } u;
+  union { simde__m128i v; int16_t x[8]; } u;
   int16_t r1, r2;
   int     i,z;
 
@@ -607,11 +606,11 @@ int
 main(int argc, char **argv)
 {
   float    x;                           /* scalar input */
-  __m128   xv;                          /* input vector */
-  union { __m128 v; float x[4]; } rv;   /* result vector*/
+  simde__m128   xv;                          /* input vector */
+  union { simde__m128 v; float x[4]; } rv;   /* result vector*/
 
   x    = 2.0;
-  xv   = _mm_set1_ps(x);
+  xv   = simde_mm_set1_ps(x);
   rv.v = esl_sse_logf(xv);
   printf("logf(%f) = %f\n", x, rv.x[0]);
   

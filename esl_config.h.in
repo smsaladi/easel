@@ -76,7 +76,7 @@
 #undef HAVE_ERFC            // esl_stats
 #undef HAVE_GETCWD          // esl_getcwd
 #undef HAVE_GETPID          // esl_random
-#undef HAVE__MM_MALLOC      // esl_alloc
+#undef HAVE_SIMDE_MM_MALLOC      // esl_alloc
 #undef HAVE_POPEN           // various file parsers that check for piped input
 #undef HAVE_POSIX_MEMALIGN  // esl_alloc
 #undef HAVE_STRCASECMP      // easel::esl_strcasecmp()
